@@ -7,7 +7,7 @@ app = Flask(__name__)
 # AnythingLLM API URL ve anahtar
 ANYTHINGLLM_API_URL = "https://0gjqsimv.rpcl.host/api/workspace/e-lokman/stream-chat"
 API_KEY = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJhZG1pbiIsImlhdCI6MTc0MTg1OTc2NSwiZXhwIjoxNzQ0NDUxNzY1fQ.m2A2fvLU_nsgxIN0rt93K5z96HUr2ZCkdavDu4_DDLU",
-"Content-Type": "text/event-stream"
+"Content-Type": "application/json"
 
 @app.route('/')
 def home():
