@@ -5,8 +5,8 @@ import os
 app = Flask(__name__)
 
 # AnythingLLM API URL ve anahtar
-ANYTHINGLLM_API_URL = "https://0gjqsimv.rpcl.host/api/workspace/e-lokman/stream-chat"
-API_KEY = "Bearer {K5K0TNA-D604WTM-P3D20RE-BSYP2B1}"
+ANYTHINGLLM_API_URL = "https://0gjqsimv.rpcl.host/api/workspace/e-lokman/chat"
+API_KEY = "Bearer K5K0TNA-D604WTM-P3D20RE-BSYP2B1"
 
 @app.route('/')
 def home():
