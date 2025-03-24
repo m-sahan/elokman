@@ -42,7 +42,7 @@ def chat():
                 {"role": "user", "parts": [{"text": user_message}]}
             ],
             "generationConfig": {
-                "maxOutputTokens": 500
+                "maxOutputTokens": 1200
             }
         }
 
