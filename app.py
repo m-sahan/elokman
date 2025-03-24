@@ -1,78 +1,64 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import requests
 import os
+import google.generativeai as genai
+
 
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
-# CORS için daha kapsamlı bir çözüm
-@app.after_request
-def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
-    response.headers.add('Access-Control-Max-Age', '3600')
-    # OPTIONS istekleri için hızlı yanıt
-    if request.method == 'OPTIONS':
-        return response
-    return response
-
-# OPTIONS istekleri için endpoint
-@app.route('/chat', methods=['OPTIONS'])
-def options():
-    return '', 200
-
-# AnythingLLM API URL ve anahtar
-ANYTHINGLLM_API_URL = "https://0gjqsimv.rpcl.host/api/workspace/e-lokman/chat"
-API_KEY = "K5K0TNA-D604WTM-P3D20RE-BSYP2B1"
+# Gemini API Anahtarı ve URL
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyBXekNRn2DCqsHN6op2x1XwkOxSg7IlM9U")
+GEMINI_API_URL = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key={GEMINI_API_KEY}"
 
 @app.route('/')
 def home():
-    return "Flask çalışıyor! Chat için /chat rotasını kullanın (POST isteği)."
+    return "Flask çalışıyor! Gemini Chat için /chat rotasını kullanın (POST isteği)."
 
-@app.route('/chat', methods=['POST'])
+@app.route('/chat', methods=['POST', 'OPTIONS'])
+@app.route('/chat', methods=['POST', 'OPTIONS'])
 def chat():
-    try:
-        # Debug için request bilgilerini yazdır
-        print(f"Gelen istek: {request.method} - Headers: {request.headers}")
-        print(f"İstek JSON: {request.json}")
-        
-        user_message = request.json.get("message")
-        if not user_message:
-            return jsonify({"response": "Mesaj boş olamaz."}), 400
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'success'})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        return response
 
-        # AnythingLLM'ye istek gönder
+    try:
+        # 'contents' içinde kullanıcı mesajını alın
+        user_message = request.json.get("contents", [{}])[0].get("parts", [{}])[0].get("text", "")
+        
+        if not user_message:
+            return jsonify({"reply": "Mesaj boş olamaz."}), 400
+
+        # Gemini API'ye istek gönder
         headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {API_KEY}"
+            "Content-Type": "application/json"
         }
-        
-        print(f"AnythingLLM'ye gönderilen istek: {user_message}")
-        response = requests.post(ANYTHINGLLM_API_URL, json={"message": user_message}, headers=headers, timeout=30)
-        
-        # API yanıtını logla
-        print(f"AnythingLLM status kodu: {response.status_code}")
-        print(f"AnythingLLM yanıt headers: {response.headers}")
-        
-        try:
-            llm_response = response.json()
-            print(f"AnythingLLM JSON yanıtı: {llm_response}")
-            reply = llm_response.get("reply", "Yanıt alınamadı.")
-        except Exception as e:
-            print(f"JSON parse hatası: {str(e)}")
-            print(f"Ham yanıt: {response.text}")
-            reply = "Yanıt formatı beklendiği gibi değil."
-            
-        return jsonify({"response": reply})
-    
+        payload = {
+            "contents": [
+                {"role": "user", "parts": [{"text": user_message}]}
+            ],
+            "generationConfig": {
+                "maxOutputTokens": 500
+            }
+        }
+
+        response = requests.post(GEMINI_API_URL, json=payload, headers=headers)
+        response.raise_for_status()
+
+        result = response.json()
+        reply = result.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "Yanıt alınamadı.")
+        return jsonify({"reply": reply})
+
     except requests.exceptions.RequestException as e:
-        error_msg = f"AnythingLLM hatası: {str(e)}"
-        print(error_msg)
-        return jsonify({"response": error_msg}), 500
+        return jsonify({"reply": f"Gemini API hatası: {str(e)}"}), 500
     except Exception as e:
-        error_msg = f"Genel hata: {str(e)}"
-        print(error_msg)
-        return jsonify({"response": error_msg}), 500
+        return jsonify({"reply": f"Genel hata: {str(e)}"}), 500
+
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=port)
