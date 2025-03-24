@@ -10,7 +10,7 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Gemini API Anahtarı ve URL
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyBXekNRn2DCqsHN6op2x1XwkOxSg7IlM9U")
-GEMINI_API_URL = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key={GEMINI_API_KEY}"
+GEMINI_API_URL = f"https://0gjqsimv.rpcl.host/workspace/e-lokman/{GEMINI_API_KEY}"
 
 @app.route('/')
 def home():
